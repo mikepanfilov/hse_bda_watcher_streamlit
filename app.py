@@ -15,7 +15,7 @@ st.caption("Kоличество контрактов и оплаченных д�
 
 # url = st.text_input("XLS(X) URL", value=DEFAULT_URL)
 url = DEFAULT_URL
-reg_input = st.text_input("Регистрационный номер для поиска ранга", value="", placeholder="Например: 12345678")
+reg_input = st.text_input("Регистрационный номер для рассчета рейтинга", value="", placeholder="Например: 12345678")
 
 # Auto-refresh every hour
 st_autorefresh(interval=60 * 60 * 1000, key="hourly_refresh")
