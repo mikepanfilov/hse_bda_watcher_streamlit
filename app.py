@@ -89,7 +89,7 @@ try:
 
     st.write("**A20**:", data["a20"] or "—")
 
-    st.caption("Auto-refresh hourly. Cached results refresh hourly or when URL changes.")
+    # st.caption("Auto-refresh hourly. Cached results refresh hourly or when URL changes.")
 
     if reg_input.strip():
         reg = reg_input.strip()
