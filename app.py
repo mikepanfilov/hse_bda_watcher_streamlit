@@ -4,6 +4,7 @@ import time
 import requests
 from openpyxl import load_workbook
 import streamlit as st
+from streamlit_autorefresh import st_autorefresh
 
 st.set_page_config(page_title="HSE XLS Monitor", layout="centered")
 
@@ -15,18 +16,13 @@ st.caption("Parses A20 for update time, counts 'Да' in H22:H500 (contracts) an
 url = st.text_input("XLS(X) URL", value=DEFAULT_URL)
 
 # Auto-refresh every hour
-st_autorefresh = st.experimental_rerun  # backward compat shim if needed
-st_autorefresh = st.autorefresh if hasattr(st, "autorefresh") else None
-if st_autorefresh:
-    st_autorefresh(interval=60 * 60 * 1000, key="hourly_refresh")
+st_autorefresh(interval=60 * 60 * 1000, key="hourly_refresh")
 
 @st.cache_data(ttl=60*60, show_spinner=True)
 def fetch_and_parse(u: str):
-    # Fetch
     r = requests.get(u, timeout=60)
     r.raise_for_status()
     bio = io.BytesIO(r.content)
-    # Parse with openpyxl for exact cells
     wb = load_workbook(bio, data_only=True)
     ws = wb.active  # first sheet
 
@@ -35,10 +31,8 @@ def fetch_and_parse(u: str):
             return False
         return str(val).strip().lower() == "да"
 
-    # A20 date/time string
     a20 = ws["A20"].value
 
-    # Counts
     contracts = 0
     paid = 0
     for row in range(22, 501):
@@ -62,7 +56,7 @@ try:
     c3.metric("Last check (UTC)", time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(data["ts"])))
 
     st.write("**A20**:", data["a20"] or "—")
-    st.caption("Next auto-refresh in ~1 hour. Cached results refresh hourly or when URL changes.")
+    st.caption("Auto-refresh hourly. Cached results refresh hourly or when URL changes.")
 except Exception as e:
     st.error(f"Error: {e}")
     st.stop()
