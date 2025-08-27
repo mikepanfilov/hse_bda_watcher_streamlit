@@ -10,15 +10,41 @@ st.set_page_config(page_title="HSE XLS Monitor", layout="centered")
 
 DEFAULT_URL = "https://priem44.hse.ru/ABITREPORTS/MAGREPORTS/EnrollmentList/28367398628_Commercial.xlsx"
 
-st.title("Монитор ВШЭ: АБД")
-st.caption("Kоличество контрактов и оплаченных договоров. Считает 'Да' в соответствующих полях файла. Кэшированные результаты обновляются каждый час.")
+st.title("HSE XLS Monitor")
+st.caption("A20 update time, counts 'Да' in H/I, rank by 'Регистрационный номер', and shows 'Сумма конкурсных баллов'.")
 
-# url = st.text_input("XLS(X) URL", value=DEFAULT_URL)
-url = DEFAULT_URL
-reg_input = st.text_input("Регистрационный номер для рассчета рейтинга", value="", placeholder="Например: 12345678")
+url = st.text_input("XLS(X) URL", value=DEFAULT_URL)
+reg_input = st.text_input("Регистрационный номер", value="", placeholder="Например: 12345678")
 
 # Auto-refresh every hour
 st_autorefresh(interval=60 * 60 * 1000, key="hourly_refresh")
+
+def is_yes(val):
+    if val is None:
+        return False
+    return str(val).strip().lower() == "да"
+
+def norm_reg(v):
+    """Return a tuple: (raw_str, canonical_digits) for comparison that ignores leading zeros and spaces."""
+    if v is None:
+        return None, None
+    s = str(v).strip()
+    digits = "".join(ch for ch in s if ch.isdigit())
+    digits_nz = digits.lstrip("0") or "0" if digits else None
+    return s, digits_nz
+
+def to_number(val):
+    """Parse numbers that may come as strings with comma decimal. Return float or None."""
+    if val is None:
+        return None
+    if isinstance(val, (int, float)):
+        return float(val)
+    s = str(val).strip().replace(" ", "").replace("\u00A0", "")
+    s = s.replace(",", ".")
+    try:
+        return float(s)
+    except Exception:
+        return None
 
 @st.cache_data(ttl=60*60, show_spinner=True)
 def fetch_and_parse(u: str):
@@ -28,32 +54,47 @@ def fetch_and_parse(u: str):
     wb = load_workbook(bio, data_only=True)
     ws = wb.active  # first sheet
 
-    def is_yes(val):
-        if val is None:
-            return False
-        return str(val).strip().lower() == "да"
-
     a20 = ws["A20"].value
 
-    rows = []  # collect minimal info from rows 22..500
+    # Detect columns on header row (21)
+    header_row = 21
+    reg_col_idx = 2  # fallback B
+    score_col_idx = 6  # fallback F
+    try:
+        for ci in range(1, 40):
+            val = ws.cell(row=header_row, column=ci).value
+            if not val:
+                continue
+            sval = str(val).strip().lower()
+            if sval == "регистрационный номер":
+                reg_col_idx = ci
+            if sval == "сумма конкурсных баллов":
+                score_col_idx = ci
+    except Exception:
+        pass
+
+    rows = []
     contracts = 0
     paid = 0
     for row in range(22, 501):
-        reg = ws[f"B{row}"].value
-        has_contract = is_yes(ws[f"H{row}"].value)
-        has_paid = is_yes(ws[f"I{row}"].value)
-        if has_contract:
+        reg_val = ws.cell(row=row, column=reg_col_idx).value
+        raw, canon = norm_reg(reg_val)
+        c_yes = is_yes(ws[f"H{row}"].value)
+        p_yes = is_yes(ws[f"I{row}"].value)
+        score_val = to_number(ws.cell(row=row, column=score_col_idx).value)
+        if c_yes:
             contracts += 1
-        if has_paid:
+        if p_yes:
             paid += 1
         rows.append({
             "row": row,
-            "reg": str(reg).strip() if reg is not None else None,
-            "contract": has_contract,
-            "paid": has_paid
+            "reg_raw": raw,
+            "reg_canon": canon,
+            "contract": c_yes,
+            "paid": p_yes,
+            "score": score_val
         })
 
-    # Precompute the order of rows that have 'Да' for contract/paid by sheet order
     contract_rows = [r for r in rows if r["contract"]]
     paid_rows = [r for r in rows if r["paid"]]
 
@@ -67,66 +108,65 @@ def fetch_and_parse(u: str):
         "paid_rows": paid_rows
     }
 
-def compute_rank_by_row(rows_yes, target_row):
-    """Return 1-based rank among rows_yes according to sheet order.
-    If target_row is below all rows_yes, returns len(rows_yes)+1.
-    """
-    # rows_yes is already ordered by sheet row ascending
-    rank = 1
-    for r in rows_yes:
-        if r["row"] < target_row:
-            rank += 1
-        else:
-            break
-    return rank
+def fmt_score(x):
+    if x is None:
+        return "—"
+    if abs(x - round(x)) < 1e-9:
+        return f"{int(round(x))}"
+    return f"{x:.2f}"
 
 try:
     data = fetch_and_parse(url)
     c1, c2, c3 = st.columns(3)
-    c1.metric("Заключенных договоров", data["contracts"])
-    c2.metric("Оплаченных договоров", data["paid"])
-    # c3.metric("Последнее обновление", time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(data["ts"])))
+    c1.metric("Contracts (H22:H500 == 'Да')", data["contracts"])
+    c2.metric("Paid (I22:I500 == 'Да')", data["paid"])
+    c3.metric("Last check (UTC)", time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(data["ts"])))
 
     st.write("**A20**:", data["a20"] or "—")
-
-    # st.caption("Auto-refresh hourly. Cached results refresh hourly or when URL changes.")
+    st.caption("Auto-refresh hourly. Cached results refresh hourly or when URL changes.")
 
     if reg_input.strip():
-        reg = reg_input.strip()
-        all_rows = data["rows"]
-        found = next((r for r in all_rows if r["reg"] == reg), None)
-        if not found:
-            st.error("Регистрационный номер не найден в файле.")
-        else:
-            # factual ranks among 'Да' lists by sheet order
-            fact_contract_rank = None
-            fact_paid_rank = None
-            if found["contract"]:
-                # rank is index in contract_rows by row order
-                fact_contract_rank = next((i+1 for i, r in enumerate(data["contract_rows"]) if r["row"] == found["row"]), None)
-            if found["paid"]:
-                fact_paid_rank = next((i+1 for i, r in enumerate(data["paid_rows"]) if r["row"] == found["row"]), None)
+        reg_raw, reg_can = norm_reg(reg_input)
+        found = None
+        for r in data["rows"]:
+            if r["reg_raw"] == reg_raw or (reg_can and r["reg_canon"] == reg_can):
+                found = r
+                break
 
-            # positional ranks even if candidate is not 'Да' (where they'd stand)
-            pos_contract_rank = compute_rank_by_row(data["contract_rows"], found["row"])
-            pos_paid_rank = compute_rank_by_row(data["paid_rows"], found["row"])
+        if not found:
+            st.error("Регистрационный номер не найден.")
+        else:
+            st.metric("Сумма конкурсных баллов", fmt_score(found.get("score")))
+
+            contract_rank = None
+            if found["contract"]:
+                for i, rr in enumerate(data["contract_rows"]):
+                    if rr["row"] == found["row"]:
+                        contract_rank = i + 1
+                        break
+
+            paid_rank = None
+            if found["paid"]:
+                for i, rr in enumerate(data["paid_rows"]):
+                    if rr["row"] == found["row"]:
+                        paid_rank = i + 1
+                        break
 
             c1, c2 = st.columns(2)
-            c1.metric("Место среди договоров", fact_contract_rank if fact_contract_rank is not None else pos_contract_rank)
-            c2.metric("Место среди оплат", fact_paid_rank if fact_paid_rank is not None else pos_paid_rank)
+            c1.metric("Место среди договоров", contract_rank if contract_rank is not None else "—")
+            c2.metric("Место среди оплат", paid_rank if paid_rank is not None else "—")
 
-            note = []
-            if fact_contract_rank is None:
-                note.append("абитуриент пока **не в списке заключивших договор**; показана позиция по месту в общем рейтинге")
-            if fact_paid_rank is None:
-                note.append("абитуриент пока **не в списке оплативших**; показана позиция по месту в общем рейтинге")
-            if note:
-                st.caption(" ; ".join(note))
-
+            notes = []
+            if contract_rank is None:
+                notes.append("абитуриент не в списке **заключивших договор**")
+            if paid_rank is None:
+                notes.append("абитуриент не в списке **оплативших**")
+            if notes:
+                st.caption("; ".join(notes))
 
 except Exception as e:
     st.error(f"Error: {e}")
     st.stop()
 
-# with st.expander("Raw debug"):
-#     st.code(f"URL: {url}\nA20: {data['a20']}\nContracts: {data['contracts']}\nPaid: {data['paid']}\nFetched at: {data['ts']}", language="text")
+with st.expander("Raw debug"):
+    st.code("App loaded. Enter reg number to see score and ranks.", language="text")
