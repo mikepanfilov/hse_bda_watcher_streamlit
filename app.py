@@ -10,10 +10,11 @@ st.set_page_config(page_title="HSE XLS Monitor", layout="centered")
 
 DEFAULT_URL = "https://priem44.hse.ru/ABITREPORTS/MAGREPORTS/EnrollmentList/28367398628_Commercial.xlsx"
 
-st.title("HSE XLS Monitor")
-st.caption("A20 update time, counts 'Да' in H/I, rank by 'Регистрационный номер', and shows 'Сумма конкурсных баллов'.")
+st.title("Монитор ВШЭ: АБД")
+st.caption("Количество контрактов и заключенных договоров. Сумма конкурсных баллов и индивидуальный рейтинг по регистрационному номеру. Кешированные результаты обновляется раз в час.")
 
-url = st.text_input("XLS(X) URL", value=DEFAULT_URL)
+# url = st.text_input("XLS(X) URL", value=DEFAULT_URL)
+url = DEFAULT_URL
 reg_input = st.text_input("Регистрационный номер", value="", placeholder="Например: 12345678")
 
 # Auto-refresh every hour
@@ -118,12 +119,11 @@ def fmt_score(x):
 try:
     data = fetch_and_parse(url)
     c1, c2, c3 = st.columns(3)
-    c1.metric("Contracts (H22:H500 == 'Да')", data["contracts"])
-    c2.metric("Paid (I22:I500 == 'Да')", data["paid"])
-    c3.metric("Last check (UTC)", time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(data["ts"])))
+    c1.metric("Заключенных договоров", data["contracts"])
+    c2.metric("Оплаченных договоров", data["paid"])
+    # c3.metric("Last check (UTC)", time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(data["ts"])))
 
     st.write("**A20**:", data["a20"] or "—")
-    st.caption("Auto-refresh hourly. Cached results refresh hourly or when URL changes.")
 
     if reg_input.strip():
         reg_raw, reg_can = norm_reg(reg_input)
@@ -168,5 +168,5 @@ except Exception as e:
     st.error(f"Error: {e}")
     st.stop()
 
-with st.expander("Raw debug"):
-    st.code("App loaded. Enter reg number to see score and ranks.", language="text")
+# with st.expander("Raw debug"):
+#     st.code("App loaded. Enter reg number to see score and ranks.", language="text")
