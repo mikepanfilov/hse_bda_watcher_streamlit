@@ -14,6 +14,7 @@ st.title("Монитор ВШЭ: АБД количество контракто�
 st.caption("Считает 'Да' в соответствующих полях файла.")
 
 # url = st.text_input("XLS(X) URL", value=DEFAULT_URL)
+url = DEFAULT_URL
 
 # Auto-refresh every hour
 st_autorefresh(interval=60 * 60 * 1000, key="hourly_refresh")
