@@ -10,10 +10,10 @@ st.set_page_config(page_title="HSE XLS Monitor", layout="centered")
 
 DEFAULT_URL = "https://priem44.hse.ru/ABITREPORTS/MAGREPORTS/EnrollmentList/28367398628_Commercial.xlsx"
 
-st.title("HSE XLS Monitor")
-st.caption("Parses A20 for update time, counts 'Да' in H22:H500 (contracts) and I22:I500 (paid).")
+st.title("Монитор ВШЭ: АБД количество контрактов и оплаченных договоров")
+st.caption("Считает 'Да' в соответствующих полях файла.")
 
-url = st.text_input("XLS(X) URL", value=DEFAULT_URL)
+# url = st.text_input("XLS(X) URL", value=DEFAULT_URL)
 
 # Auto-refresh every hour
 st_autorefresh(interval=60 * 60 * 1000, key="hourly_refresh")
@@ -51,15 +51,15 @@ def fetch_and_parse(u: str):
 try:
     data = fetch_and_parse(url)
     c1, c2, c3 = st.columns(3)
-    c1.metric("Contracts (H22:H500 == 'Да')", data["contracts"])
-    c2.metric("Paid (I22:I500 == 'Да')", data["paid"])
-    c3.metric("Last check (UTC)", time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(data["ts"])))
+    c1.metric("Заключенных договоров", data["contracts"])
+    c2.metric("Оплаченных договоров", data["paid"])
+    c3.metric("Последнее обновление", time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(data["ts"])))
 
     st.write("**A20**:", data["a20"] or "—")
-    st.caption("Auto-refresh hourly. Cached results refresh hourly or when URL changes.")
+    st.caption("Кэшированные результаты обновляются каждый час.")
 except Exception as e:
     st.error(f"Error: {e}")
     st.stop()
 
-with st.expander("Raw debug"):
-    st.code(f"URL: {url}\nA20: {data['a20']}\nContracts: {data['contracts']}\nPaid: {data['paid']}\nFetched at: {data['ts']}", language="text")
+# with st.expander("Raw debug"):
+#     st.code(f"URL: {url}\nA20: {data['a20']}\nContracts: {data['contracts']}\nPaid: {data['paid']}\nFetched at: {data['ts']}", language="text")
