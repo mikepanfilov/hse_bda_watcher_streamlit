@@ -12,6 +12,7 @@ DEFAULT_URL = "https://priem44.hse.ru/ABITREPORTS/MAGREPORTS/EnrollmentList/2836
 
 st.title("Монитор ВШЭ: АБД")
 st.caption("Kоличество контрактов и оплаченных договоров. Считает 'Да' в соответствующих полях файла.")
+st.caption("Кэшированные результаты обновляются каждый час.")
 
 # url = st.text_input("XLS(X) URL", value=DEFAULT_URL)
 url = DEFAULT_URL
@@ -124,12 +125,9 @@ try:
                 st.caption(" ; ".join(note))
 
 
-    st.caption("Кэшированные результаты обновляются каждый час.")
-
 except Exception as e:
     st.error(f"Error: {e}")
     st.stop()
 
 # with st.expander("Raw debug"):
 #     st.code(f"URL: {url}\nA20: {data['a20']}\nContracts: {data['contracts']}\nPaid: {data['paid']}\nFetched at: {data['ts']}", language="text")
-
