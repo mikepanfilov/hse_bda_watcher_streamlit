@@ -10,19 +10,12 @@ st.set_page_config(page_title="HSE XLS Monitor", layout="centered")
 
 DEFAULT_URL = "https://priem44.hse.ru/ABITREPORTS/MAGREPORTS/EnrollmentList/28367398628_Commercial.xlsx"
 
-<<<<<<< HEAD
-st.title("HSE XLS Monitor")
-st.caption("Parses A20 for update time, counts 'Да' in H22:H500 (contracts) and I22:I500 (paid). Shows rank by registration number among those with 'Да'.")
-
-url = st.text_input("XLS(X) URL", value=DEFAULT_URL)
-reg_input = st.text_input("Регистрационный номер для поиска ранга", value="", placeholder="Например: 12345678")
-=======
 st.title("Монитор ВШЭ: АБД")
 st.caption("Kоличество контрактов и оплаченных договоров. Считает 'Да' в соответствующих полях файла.")
 
 # url = st.text_input("XLS(X) URL", value=DEFAULT_URL)
 url = DEFAULT_URL
->>>>>>> 08158a70ff449571d29e2321aadc76f967ce0b2f
+reg_input = st.text_input("Регистрационный номер для поиска ранга", value="", placeholder="Например: 12345678")
 
 # Auto-refresh every hour
 st_autorefresh(interval=60 * 60 * 1000, key="hourly_refresh")
@@ -95,7 +88,7 @@ try:
     # c3.metric("Последнее обновление", time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(data["ts"])))
 
     st.write("**A20**:", data["a20"] or "—")
-<<<<<<< HEAD
+
     st.caption("Auto-refresh hourly. Cached results refresh hourly or when URL changes.")
 
     if reg_input.strip():
@@ -130,17 +123,13 @@ try:
             if note:
                 st.caption(" ; ".join(note))
 
-=======
+
     st.caption("Кэшированные результаты обновляются каждый час.")
->>>>>>> 08158a70ff449571d29e2321aadc76f967ce0b2f
+
 except Exception as e:
     st.error(f"Error: {e}")
     st.stop()
 
-<<<<<<< HEAD
-with st.expander("Raw debug"):
-    st.code("Debug snapshot will appear after first successful parse.", language="text")
-=======
 # with st.expander("Raw debug"):
 #     st.code(f"URL: {url}\nA20: {data['a20']}\nContracts: {data['contracts']}\nPaid: {data['paid']}\nFetched at: {data['ts']}", language="text")
->>>>>>> 08158a70ff449571d29e2321aadc76f967ce0b2f
+
