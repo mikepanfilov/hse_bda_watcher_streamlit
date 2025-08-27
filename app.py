@@ -11,8 +11,7 @@ st.set_page_config(page_title="HSE XLS Monitor", layout="centered")
 DEFAULT_URL = "https://priem44.hse.ru/ABITREPORTS/MAGREPORTS/EnrollmentList/28367398628_Commercial.xlsx"
 
 st.title("Монитор ВШЭ: АБД")
-st.caption("Kоличество контрактов и оплаченных договоров. Считает 'Да' в соответствующих полях файла.")
-st.caption("Кэшированные результаты обновляются каждый час.")
+st.caption("Kоличество контрактов и оплаченных договоров. Считает 'Да' в соответствующих полях файла. Кэшированные результаты обновляются каждый час.")
 
 # url = st.text_input("XLS(X) URL", value=DEFAULT_URL)
 url = DEFAULT_URL
