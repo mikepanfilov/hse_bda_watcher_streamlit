@@ -51,7 +51,8 @@ def fetch_and_parse(u: str):
 
 try:
     data = fetch_and_parse(url)
-    c1, c2, c3 = st.columns(3)
+    с1, c2 = st.columns(2)
+    # c1, c2, c3 = st.columns(3)
     c1.metric("Заключенных договоров", data["contracts"])
     c2.metric("Оплаченных договоров", data["paid"])
     # c3.metric("Последнее обновление", time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(data["ts"])))
