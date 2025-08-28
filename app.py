@@ -118,14 +118,12 @@ def fmt_score(x):
 try:
     data = fetch_and_parse(url)
 
-    st.write("**A20**:", data["a20"] or "—")
+    st.caption("**A20**:", data["a20"] or "—")
 
     c1, c2, c3 = st.columns(3)
     c1.metric("Заключенных договоров", data["contracts"])
     c2.metric("Оплаченных договоров", data["paid"])
     # c3.metric("Last check (UTC)", time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(data["ts"])))
-
-    st.write("**A20**:", data["a20"] or "—")
 
     reg_input = st.text_input("Регистрационный номер абитуриента", value="", placeholder="Введи сюда свой регистрационный номер")
     
