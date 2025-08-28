@@ -118,7 +118,7 @@ def fmt_score(x):
 try:
     data = fetch_and_parse(url)
 
-    st.caption("**A20**:", data["a20"] or "—")
+    st.caption(f"**A20**: {data["a20"] or "—"}")
 
     c1, c2, c3 = st.columns(3)
     c1.metric("Заключенных договоров", data["contracts"])
