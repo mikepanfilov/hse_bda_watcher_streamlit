@@ -125,7 +125,7 @@ try:
     c2.metric("Оплаченных договоров", data["paid"])
     # c3.metric("Last check (UTC)", time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(data["ts"])))
 
-    reg_input = st.text_input("Регистрационный номер абитуриента", value="", placeholder="Введи сюда свой регистрационный номер")
+    reg_input = st.text_input("", value="", placeholder="Введи сюда свой регистрационный номер")
     
     if reg_input.strip():
         reg_raw, reg_can = norm_reg(reg_input)
