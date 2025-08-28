@@ -15,7 +15,6 @@ st.caption("Ниже отображается суммарное количес�
 
 # url = st.text_input("XLS(X) URL", value=DEFAULT_URL)
 url = DEFAULT_URL
-reg_input = st.text_input("Регистрационный номер абитуриента", value="", placeholder="Введи сюда свой регистрационный номер")
 
 # Auto-refresh every hour
 st_autorefresh(interval=60 * 60 * 1000, key="hourly_refresh")
@@ -125,6 +124,8 @@ try:
 
     st.write("**A20**:", data["a20"] or "—")
 
+    reg_input = st.text_input("Регистрационный номер абитуриента", value="", placeholder="Введи сюда свой регистрационный номер")
+    
     if reg_input.strip():
         reg_raw, reg_can = norm_reg(reg_input)
         found = None
