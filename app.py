@@ -15,7 +15,7 @@ st.caption("Количество контрактов и заключенных 
 
 # url = st.text_input("XLS(X) URL", value=DEFAULT_URL)
 url = DEFAULT_URL
-reg_input = st.text_input("Регистрационный номер", value="", placeholder="Например: 12345678")
+reg_input = st.text_input("Регистрационный номер абитуриента", value="", placeholder="Введи сюда свой регистрационный номер")
 
 # Auto-refresh every hour
 st_autorefresh(interval=60 * 60 * 1000, key="hourly_refresh")
